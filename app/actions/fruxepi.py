@@ -11,6 +11,8 @@ from time import strftime
 import pymysql
 from PIL import Image
 import subprocess
+import time
+
 
 
 # Script Arguments
@@ -332,14 +334,49 @@ def fanProgram(gpioPIN, timeInterval):
 # Lights ON
 def lightsON(gpioPIN):
     print("Lights ON")
-    os.system("gpio -g mode " + str(gpioPIN) + " out")
-    os.system("gpio -g write " + str(gpioPIN) + " 1")
+    #https://www.instructables.com/id/Super-Simple-Raspberry-Pi-433MHz-Home-Automation/
+    
+    #a_on
+    code =  '1010101111101010110011001'
+    #a_off = '1010101111101010110000111'
+
+    short_delay =    0.000175
+    long_delay =     0.00055
+    extended_delay = 0.0096
+
+    NUM_ATTEMPTS = 20
+    TRANSMIT_PIN = str(gpioPIN)
+
+    def transmit_code(code):
+        '''Transmit a chosen code string using the GPIO transmitter'''
+        GPIO.setmode(GPIO.BCM)
+        GPIO.setup(TRANSMIT_PIN, GPIO.OUT)
+        for t in range(NUM_ATTEMPTS):
+            for i in code:
+                if i == '1':
+                    GPIO.output(TRANSMIT_PIN, 1)
+                    time.sleep(short_delay)
+                    GPIO.output(TRANSMIT_PIN, 0)
+                    time.sleep(long_delay)
+                elif i == '0':
+                    GPIO.output(TRANSMIT_PIN, 1)
+                    time.sleep(long_delay)
+                    GPIO.output(TRANSMIT_PIN, 0)
+                    time.sleep(short_delay)
+                else:
+                    continue
+            GPIO.output(TRANSMIT_PIN, 0)
+            time.sleep(extended_delay)
+        GPIO.cleanup()
+
+    #os.system("gpio -g mode " + str(gpioPIN) + " out")
+    #os.system("gpio -g write " + str(gpioPIN) + " 1")
 
 # Lights OFF
 def lightsOFF(gpioPIN):
     print("Lights OFF")
-    os.system("gpio -g mode " + str(gpioPIN) + " out")
-    os.system("gpio -g write " + str(gpioPIN) + " 0")
+    #os.system("gpio -g mode " + str(gpioPIN) + " out")
+    #os.system("gpio -g write " + str(gpioPIN) + " 0")
 
 # Pump ON
 def pumpON(gpioPIN):
